@@ -1,3 +1,4 @@
+import threading
 import time
 import numpy as np
 import argparse
@@ -8,7 +9,27 @@ import sys
 import time
 import util
 import CMT
+from Adafruit_MotorHAT import Adafruit_MotorHAT, Adafruit_DCMotor, Adafruit_StepperMotor
 
+import time
+import atexit
+
+mh = Adafruit_MotorHAT(addr = 0x60)
+
+# recommended for auto-disabling motors on shutdown!
+def turnOffMotors():
+    mh.getMotor(1).run(Adafruit_MotorHAT.RELEASE)
+    mh.getMotor(2).run(Adafruit_MotorHAT.RELEASE)
+    mh.getMotor(3).run(Adafruit_MotorHAT.RELEASE)
+    mh.getMotor(4).run(Adafruit_MotorHAT.RELEASE)
+                                
+atexit.register(turnOffMotors)
+
+myStepper1 = mh.getStepper(200, 1) 
+myStepper2 = mh.getStepper(200, 2)
+
+myStepper1.setSpeed(90)
+myStepper2.setSpeed(90)
 
 CMT = CMT.CMT()
 parser = argparse.ArgumentParser(description='Track an object.')
@@ -124,15 +145,22 @@ while True:
         move_point_x = Centerpoint_in_box[0] - center_point_in_frame_x 
         move_point_y = Centerpoint_in_box[1] - center_point_in_frame_y 
 
+        stepper1_direction = None
+        stepper2_direction = None
+
         if move_point_x > 0:
             direction_x = 'right'
+            stepper1_direction = Adafruit_MotorHAT.FORWARD
         else:
             direction_x = 'left'
+            stepper1_direction = Adafruit_MotorHAT.BACKWARD
 
         if move_point_y > 0:
             direction_y = 'up'
+            stepper2_direction = Adafruit_MotorHAT.FORWARD
         else:
             direction_y = 'down'
+            stepper2_direction = Adafruit_MotorHAT.BACKWARD
             
         print 'To locate the tracked box to center, please move %s point to %s and %s point to %s \n' % (str(abs(move_point_x)), str(direction_x), str(abs(move_point_y)), str(direction_y))
         print 'look up table \nx value :%s %s \ny value :%s %s \n\n' % (direction_x, str(x_arr[abs(move_point_x)]), direction_y, str(y_arr[abs(move_point_x)]))
@@ -141,6 +169,9 @@ while True:
         cv2.arrowedLine(im_draw, (Centerpoint_in_box[0], Centerpoint_in_box[1]), (center_point_in_frame_x, Centerpoint_in_box[1]), (0,0,255), 3) # x draw
         cv2.arrowedLine(im_draw, (center_point_in_frame_x, Centerpoint_in_box[1]), (center_point_in_frame_x, center_point_in_frame_y), (0,0,255), 3) # y draw
         cv2.circle(im_draw, (center_point_in_frame_x, center_point_in_frame_y), 40, (0, 255, 255), 1)
+
+        myStepper1.step(5, stepper1_direction, Adafruit_MotorHAT.SINGLE)
+        myStepper2.step(5, stepper2_direction, Adafruit_MotorHAT.SINGLE)
     else:
         print "Coudln't track or find the object." 
         
