@@ -1,4 +1,3 @@
-import threading
 import time
 import numpy as np
 import argparse
@@ -11,7 +10,6 @@ import util
 import CMT
 from Adafruit_MotorHAT import Adafruit_MotorHAT, Adafruit_DCMotor, Adafruit_StepperMotor
 
-import time
 import atexit
 
 mh = Adafruit_MotorHAT(addr = 0x60)
